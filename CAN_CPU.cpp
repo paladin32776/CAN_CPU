@@ -1,9 +1,5 @@
 #include "CAN_CPU.h"
 
-// ************************
-// *     CONTROL UNIT     *
-// ************************
-
 CAN_CPU::CAN_CPU(uint16_t id)
 {
   // Initialize configuration structures using macro initializers
