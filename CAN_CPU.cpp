@@ -56,32 +56,43 @@ void CAN_CPU::check()
     if (twaistatus.msgs_to_rx>0)
     {
       twai_get_status_info(&twaistatus);
-      Serial.printf("RXbuf=%d | ", twaistatus.msgs_to_rx);
+      // Serial.printf("RXbuf=%d | ", twaistatus.msgs_to_rx);
       // One or more messages received. Handle first one.
       twai_message_t message;
       if (twai_receive(&message, 0) == ESP_OK)
         handle_rx_message(message);
       twai_get_status_info(&twaistatus);
-      Serial.printf(" | RXbuf2: %d\n", twaistatus.msgs_to_rx);
+      // Serial.printf(" | RXbuf2: %d\n", twaistatus.msgs_to_rx);
     }
   }
 }
 
 bool CAN_CPU::send_message(uint8_t cmd)
 {
-  twai_message_t message = {.extd = 0, .rtr = 0, .ss = 0, .dlc_non_comp = 0,
-    .identifier = can_id, .data_length_code = 1, .data = {cmd}};
+  
   if (driver_installed)
+  {
+    // Assemble message
+    twai_message_t message = {.extd = 0, .rtr = 0, .ss = 0, .dlc_non_comp = 0,
+      .identifier = can_id, .data_length_code = 1, .data = {cmd}};
+    // Debug message
+    // if (cmd<0xF0 || cmd==RESET_CMD_BYTE)
+    //   Serial.printf("Tx CMD: 0x%02X  PARA: 0x%02X\n", cmd);
+    // Queue message for transmission
     return (twai_transmit(&message, pdMS_TO_TICKS(TRANSMIT_TIMEOUT)) == ESP_OK);
+  }
 }
 
 bool CAN_CPU::send_message(uint8_t cmd, uint8_t val)
 {
   if (driver_installed)
   {
-    // Send message
+    // Assemble message
     twai_message_t message = {.extd = 0, .rtr = 0, .ss = 0, .dlc_non_comp = 0,
       .identifier = can_id, .data_length_code = 2, .data = {cmd, val}};
+    // Debug message
+    // if (cmd<0xF0 || cmd==RESET_CMD_BYTE)
+    //   Serial.printf("Tx CMD: 0x%02X  PARA: 0x%02X\n", cmd, val);
     // Queue message for transmission
     return (twai_transmit(&message, pdMS_TO_TICKS(TRANSMIT_TIMEOUT)) == ESP_OK);
   }
@@ -90,18 +101,18 @@ bool CAN_CPU::send_message(uint8_t cmd, uint8_t val)
 void CAN_CPU::handle_rx_message(twai_message_t& message)
 {
   // Process received message
-  if (message.extd)
-    Serial.print("EXT | ");
-  else
-    Serial.print("STD | ");
-  Serial.printf("ID %x | LEN %d | RTR %d | DATA ",
-    message.identifier, message.data_length_code,  message.rtr);
+  // if (message.extd)
+  //   Serial.print("EXT | ");
+  // else
+  //   Serial.print("STD | ");
+  // Serial.printf("ID %x | LEN %d | RTR %d | DATA ",
+  //   message.identifier, message.data_length_code,  message.rtr);
   rx_length = message.data_length_code;
   if (!(message.rtr) && rx_length>0)
   {
     for (int i = 0; i < rx_length; i++)
     {
-      Serial.printf("%02x ", message.data[i]);
+      // Serial.printf("%02x ", message.data[i]);
       data[i] = message.data[i];
     }
     rx_available = true;
